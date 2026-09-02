@@ -41,6 +41,101 @@ body {
   margin-bottom: 28px;
 }
 
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  font-size: 0.92rem;
+}
+
+.role-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.role-chip.admin {
+  background: rgba(79, 70, 229, 0.2);
+  color: #a5b4fc;
+}
+
+.role-chip.employee {
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--success);
+}
+
+.login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: min(420px, 100%);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: var(--shadow);
+}
+
+.login-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.login-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.login-form input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 12px 14px;
+  font: inherit;
+}
+
+.login-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.login-roles {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.88rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.login-roles code {
+  color: var(--accent);
+}
+
 .eyebrow {
   margin: 0 0 8px;
   color: var(--accent);
@@ -447,7 +542,7 @@ button {
 
 .person-list-item {
   display: grid;
-  grid-template-columns: 64px 1fr;
+  grid-template-columns: 64px 1fr auto;
   gap: 14px;
   align-items: center;
   padding: 14px;
@@ -470,12 +565,34 @@ button {
   font-size: 0.92rem;
 }
 
+.delete-btn {
+  background: rgba(251, 113, 133, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(251, 113, 133, 0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: rgba(251, 113, 133, 0.25);
+  border-color: var(--danger);
+}
+
 @media (max-width: 900px) {
   .hero,
   .grid.two-col,
   .stats-grid {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .hero,
+  .hero-actions {
+    align-items: stretch;
   }
 
   .hero {

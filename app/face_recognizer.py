@@ -187,6 +187,16 @@ class FaceRecognizer:
         self._persist_persons()
         return person.to_public_dict()
 
+    def delete_person(self, person_id: str) -> bool:
+        if person_id not in self.persons:
+            return False
+        person = self.persons.pop(person_id)
+        self.embeddings.pop(person_id, None)
+        photo_path = KNOWN_FACES_DIR / person.photo_filename
+        photo_path.unlink(missing_ok=True)
+        self._persist_persons()
+        return True
+
     def _persist_persons(self) -> None:
         payload = {
             "persons": [

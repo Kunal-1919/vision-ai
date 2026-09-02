@@ -2,13 +2,22 @@ from functools import lru_cache
 from io import BytesIO
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
+from pydantic import BaseModel, Field
 
 from app.attendance_logger import AttendanceLogger
+from app.auth import (
+    RequireAdmin,
+    RequireAuth,
+    User,
+    create_access_token,
+    get_current_user,
+    get_user_store,
+)
 from app.config import KNOWN_FACES_DIR, LIVENESS_MIN_FRAMES, SCENE_PHONE_THRESHOLD
 from app.face_recognizer import FaceRecognizer
 from app.geofence import GeofenceValidator
@@ -19,11 +28,11 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 app = FastAPI(
     title="VisionAI",
     description=(
-        "AI-powered secure attendance verification with face recognition, "
+        "AI-powered secure attendance verification with RBAC, face recognition, "
         "anti-spoofing, scene analysis, and GPS geofencing. "
         "Built by Kunal Santosh Gawade — https://github.com/Kunal-1919"
     ),
-    version="1.2.0",
+    version="1.3.0",
 )
 
 app.add_middleware(
@@ -33,6 +42,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
+    if isinstance(exc, HTTPException):
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    return JSONResponse(status_code=500, content={"detail": "Internal server error. Please try again."})
+
+
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=2)
+    password: str = Field(min_length=6)
 
 
 @lru_cache
@@ -69,6 +90,8 @@ def _blocked_response(
     office_name: str | None = None,
     distance_meters: float | None = None,
     accuracy_meters: float | None = None,
+    person_id: str | None = None,
+    person_name: str | None = None,
 ) -> dict:
     get_attendance_logger().log(
         status="blocked",
@@ -76,6 +99,8 @@ def _blocked_response(
         message=message,
         office_name=office_name,
         distance_meters=distance_meters,
+        person_id=person_id,
+        person_name=person_name,
     )
     return {
         "recognized": False,
@@ -95,32 +120,64 @@ def _blocked_response(
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "service": "vision-ai", "version": "1.2.0"}
+    return {"status": "ok", "service": "vision-ai", "version": "1.3.0"}
+
+
+@app.post("/api/auth/login")
+def login(payload: LoginRequest) -> dict:
+    user = get_user_store().authenticate(payload.username, payload.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    token = create_access_token(user)
+    return {"access_token": token, "token_type": "bearer", "user": user.to_public_dict()}
+
+
+@app.get("/api/auth/me")
+def auth_me(current_user: RequireAuth) -> dict:
+    return {"user": current_user.to_public_dict()}
 
 
 @app.get("/api/attendance/config")
-def attendance_config() -> dict:
+def attendance_config(_: RequireAuth) -> dict:
     return get_geofence_validator().public_config()
 
 
 @app.get("/api/attendance/stats")
-def attendance_stats() -> dict:
+def attendance_stats(_: RequireAdmin) -> dict:
     recognizer = get_face_recognizer()
     return get_attendance_logger().get_stats(enrolled_count=len(recognizer.persons))
 
 
 @app.get("/api/attendance/logs")
-def attendance_logs(limit: int = 20) -> dict:
+def attendance_logs(_: RequireAdmin, limit: int = 20) -> dict:
     return {"logs": get_attendance_logger().get_recent(limit=min(limit, 100))}
+
+
+@app.get("/api/users")
+def list_users(_: RequireAdmin) -> dict:
+    return {"users": [user.to_public_dict() for user in get_user_store().list_users()]}
 
 
 @app.post("/api/recognize/face")
 async def recognize_face(
+    current_user: RequireAuth,
     files: list[UploadFile] = File(...),
     latitude: float | None = Form(None),
     longitude: float | None = Form(None),
     accuracy_meters: float | None = Form(None),
 ) -> dict:
+    if current_user.role != "employee":
+        raise HTTPException(
+            status_code=403,
+            detail="Only employees can mark attendance. Admins should use the dashboard to manage the system.",
+        )
+
+    if not current_user.person_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Your employee account is not linked to a face enrollment. Contact your administrator.",
+        )
+
     if not files:
         raise HTTPException(status_code=400, detail="At least one camera frame is required")
 
@@ -138,6 +195,8 @@ async def recognize_face(
             office_name=geo_result.office_name,
             distance_meters=geo_result.distance_meters,
             accuracy_meters=geo_result.accuracy_meters,
+            person_id=current_user.person_id,
+            person_name=current_user.name,
         )
 
     image_bytes_list: list[bytes] = []
@@ -161,6 +220,8 @@ async def recognize_face(
             office_name=geo_result.office_name,
             distance_meters=geo_result.distance_meters,
             accuracy_meters=accuracy_meters,
+            person_id=current_user.person_id,
+            person_name=current_user.name,
         )
 
     result = get_face_recognizer().recognize(image_bytes_list)
@@ -174,8 +235,10 @@ async def recognize_face(
             message=result.message,
             office_name=geo_result.office_name,
             distance_meters=geo_result.distance_meters,
+            person_id=current_user.person_id,
+            person_name=current_user.name,
         )
-    elif not result.recognized:
+    elif not result.recognized or not result.person:
         logger.log(
             status="blocked",
             reason="face_mismatch",
@@ -183,23 +246,56 @@ async def recognize_face(
             confidence=result.confidence,
             office_name=geo_result.office_name,
             distance_meters=geo_result.distance_meters,
+            person_id=current_user.person_id,
+            person_name=current_user.name,
+        )
+    elif result.person.id != current_user.person_id:
+        message = (
+            "This activity is restricted. The recognized face does not match your logged-in account. "
+            "You can only mark attendance for yourself."
+        )
+        return _blocked_response(
+            message,
+            reason="identity_mismatch",
+            office_name=geo_result.office_name,
+            distance_meters=geo_result.distance_meters,
+            accuracy_meters=accuracy_meters,
+            person_id=current_user.person_id,
+            person_name=current_user.name,
         )
     else:
         logger.log(
             status="success",
             reason="verified",
             message=result.message,
-            person_id=result.person.id if result.person else None,
-            person_name=result.person.name if result.person else None,
+            person_id=result.person.id,
+            person_name=result.person.name,
             confidence=result.confidence,
             office_name=geo_result.office_name,
             distance_meters=geo_result.distance_meters,
         )
 
+    if result.restricted or not result.recognized:
+        return {
+            "recognized": result.recognized,
+            "live": result.live,
+            "restricted": result.restricted or not result.recognized,
+            "location_verified": True,
+            "scene_verified": True,
+            "confidence": result.confidence,
+            "spoof_score": result.spoof_score,
+            "message": result.message,
+            "face_box": result.face_box,
+            "person": result.person.to_public_dict() if result.person and result.recognized else None,
+            "distance_meters": geo_result.distance_meters,
+            "office_name": geo_result.office_name,
+            "accuracy_meters": accuracy_meters,
+        }
+
     return {
-        "recognized": result.recognized,
+        "recognized": True,
         "live": result.live,
-        "restricted": result.restricted,
+        "restricted": False,
         "location_verified": True,
         "scene_verified": True,
         "confidence": result.confidence,
@@ -214,12 +310,15 @@ async def recognize_face(
 
 
 @app.get("/api/persons")
-def list_persons() -> dict:
+def list_persons(_: RequireAdmin) -> dict:
     return {"persons": get_face_recognizer().list_persons()}
 
 
 @app.get("/api/persons/{person_id}/photo")
-def get_person_photo(person_id: str):
+def get_person_photo(person_id: str, current_user: RequireAuth):
+    if current_user.role == "employee" and current_user.person_id != person_id:
+        raise HTTPException(status_code=403, detail="You can only access your own profile photo.")
+
     recognizer = get_face_recognizer()
     person = recognizer.persons.get(person_id)
     if not person:
@@ -234,14 +333,20 @@ def get_person_photo(person_id: str):
 
 @app.post("/api/persons/register")
 async def register_person(
+    _: RequireAdmin,
     person_id: str = Form(...),
     name: str = Form(...),
+    username: str = Form(...),
+    password: str = Form(...),
     role: str = Form(""),
     email: str = Form(""),
     department: str = Form(""),
     notes: str = Form(""),
     photo: UploadFile = File(...),
 ) -> dict:
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters.")
+
     if not photo.content_type or not photo.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Please upload a face photo")
 
@@ -259,10 +364,31 @@ async def register_person(
             notes=notes,
             photo_bytes=photo_bytes,
         )
+        user = get_user_store().create_employee_user(
+            username=username,
+            password=password,
+            person_id=person["id"],
+            name=name,
+            email=email,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
-    return {"message": "Person registered successfully", "person": person}
+    return {
+        "message": "Employee enrolled successfully with login credentials.",
+        "person": person,
+        "user": user.to_public_dict(),
+    }
+
+
+@app.delete("/api/persons/{person_id}")
+def delete_person(person_id: str, _: RequireAdmin) -> dict:
+    recognizer = get_face_recognizer()
+    deleted = recognizer.delete_person(person_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Person not found")
+    get_user_store().delete_user_by_person_id(person_id)
+    return {"message": f"Employee '{person_id}' deleted successfully."}
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

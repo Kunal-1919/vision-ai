@@ -25,6 +25,29 @@
 
 ---
 
+## RBAC — Role-Based Access Control
+
+| Role | Access |
+|------|--------|
+| **Admin** | Dashboard, attendance logs, enroll employees, create login credentials |
+| **Employee** | Mark own attendance only (face must match logged-in account) |
+
+### Default admin credentials (first run)
+
+- **Username:** `admin`
+- **Password:** `Admin@123`
+
+Change the password in production. Set `VISIONAI_JWT_SECRET` environment variable for production JWT signing.
+
+### Employee enrollment flow
+
+1. Admin signs in
+2. Goes to **Enroll Employee**
+3. Uploads face photo + sets username/password
+4. Employee signs in with those credentials to mark attendance
+
+---
+
 ## Security Pipeline
 
 ```
@@ -92,15 +115,15 @@ Configure office GPS in `data/office_location.json`.
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/health` | Health check |
-| `GET` | `/api/attendance/stats` | Dashboard statistics |
-| `GET` | `/api/attendance/logs` | Recent attendance records |
-| `GET` | `/api/attendance/config` | Geofence settings |
-| `POST` | `/api/recognize/face` | Attendance verification |
-| `GET` | `/api/persons` | List enrolled employees |
-| `POST` | `/api/persons/register` | Enroll employee |
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| `POST` | `/api/auth/login` | Public | Sign in |
+| `GET` | `/api/auth/me` | Auth | Current user |
+| `GET` | `/api/attendance/stats` | Admin | Dashboard statistics |
+| `GET` | `/api/attendance/logs` | Admin | Attendance records |
+| `GET` | `/api/users` | Admin | List system users |
+| `POST` | `/api/recognize/face` | Employee | Mark attendance |
+| `POST` | `/api/persons/register` | Admin | Enroll employee + login |
 
 API docs: **http://localhost:8088/docs**
 

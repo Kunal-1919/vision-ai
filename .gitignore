@@ -13,6 +13,9 @@ data/models/
 data/known_faces/*
 !data/known_faces/.gitkeep
 
+# Auth credentials (generated on first run)
+data/users.json
+
 # IDE
 .idea/
 .vscode/

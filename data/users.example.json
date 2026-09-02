@@ -1,0 +1,14 @@
+{
+  "users": [
+    {
+      "id": "user-admin",
+      "username": "admin",
+      "password_hash": "replace-on-first-run",
+      "salt": "replace-on-first-run",
+      "role": "admin",
+      "person_id": null,
+      "name": "System Administrator",
+      "email": "admin@company.com"
+    }
+  ]
+}

@@ -1,3 +1,13 @@
 {
-  "persons": []
+  "persons": [
+    {
+      "id": "kunal-gawade",
+      "name": "Kunal Gawade",
+      "role": "AI Engineer",
+      "email": "kunal@company.com",
+      "department": "Engineering",
+      "photo_filename": "kunal-gawade.jpg",
+      "notes": "Lead Developer"
+    }
+  ]
 }

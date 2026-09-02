@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "74119bf6",
+    "timestamp": "2026-09-02T08:55:04.346209+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "success",
+    "reason": "verified",
+    "message": "Attendance verified. Welcome, Kunal Gawade!",
+    "confidence": 73.1,
+    "office_name": "Leap India Office",
+    "distance_meters": 103.6
+  },
+  {
+    "id": "4793222c",
+    "timestamp": "2026-09-02T08:36:24.412696+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "blocked",
+    "reason": "liveness",
+    "message": "This activity is restricted. Live face verification failed. Please present your real face to the camera. Photos, phone screens, and printed images are not allowed.",
+    "confidence": 0.0,
+    "office_name": "Leap India Office",
+    "distance_meters": 0.0
+  },
+  {
+    "id": "affc81c3",
+    "timestamp": "2026-09-02T08:36:15.964657+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "blocked",
+    "reason": "geofence",
+    "message": "This activity is restricted. Attendance can only be marked from the office premises. You must be physically present at the office to check in. You are approximately 10906 meters away from Leap India Office.",
+    "confidence": 0.0,
+    "office_name": "Leap India Office",
+    "distance_meters": 10906.2
+  }
+]
