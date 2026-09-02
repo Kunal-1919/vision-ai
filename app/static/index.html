@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="VisionAI — AI image recognition and secure attendance verification with face recognition, anti-spoofing, and GPS geofencing." />
+  <meta name="author" content="Kunal Santosh Gawade" />
+  <title>VisionAI | Secure Attendance & Image Recognition</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Secure Attendance</p>
+        <h1>VisionAI Recognition System</h1>
+        <p class="subtitle">
+          Upload a pet photo to detect dogs and cats, or use live camera verification for secure attendance check-in.
+        </p>
+      </div>
+      <div class="status-pill" id="healthStatus">Checking service...</div>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="pet" role="tab">Pet Recognition</button>
+      <button class="tab" data-tab="face" role="tab">Attendance Check-in</button>
+      <button class="tab" data-tab="register" role="tab">Register Person</button>
+    </nav>
+
+    <main>
+      <section class="panel active" id="pet-panel">
+        <div class="grid two-col">
+          <div class="card">
+            <h2>Upload Pet Image</h2>
+            <p>Drop a dog or cat photo. The model will classify it instantly.</p>
+            <label class="upload-zone" for="petInput">
+              <input id="petInput" type="file" accept="image/*" hidden />
+              <span>Click or drag an image here</span>
+            </label>
+            <div class="preview-wrap hidden" id="petPreviewWrap">
+              <img id="petPreview" alt="Pet preview" />
+            </div>
+            <button class="primary-btn" id="petClassifyBtn" disabled>Recognize Pet</button>
+          </div>
+
+          <div class="card result-card" id="petResultCard">
+            <h2>Result</h2>
+            <div class="result-empty" id="petResultEmpty">
+              Upload an image to see whether it is a dog or a cat.
+            </div>
+            <div class="result-content hidden" id="petResultContent">
+              <div class="badge" id="petBadge">Dog</div>
+              <p class="result-message" id="petMessage"></p>
+              <p class="confidence" id="petConfidence"></p>
+              <ul class="prediction-list" id="petPredictions"></ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="face-panel">
+        <div class="grid two-col">
+          <div class="card">
+            <h2>Live Attendance Camera</h2>
+            <p>Look directly at the camera. The system verifies you are live and blocks photos or phone screens.</p>
+            <div class="security-note">
+              Attendance requires live face verification and your physical presence at the office premises.
+              Photos, phone screens, and remote check-ins from home are blocked.
+            </div>
+            <div class="location-status" id="locationStatus">
+              <span class="location-dot" id="locationDot"></span>
+              <span id="locationStatusText">Office location not checked yet</span>
+            </div>
+            <div class="camera-wrap">
+              <video id="cameraVideo" autoplay playsinline muted></video>
+              <canvas id="cameraCanvas" hidden></canvas>
+            </div>
+            <div class="button-row">
+              <button class="secondary-btn" id="startCameraBtn">Start Camera</button>
+              <button class="primary-btn" id="captureFaceBtn" disabled>Verify Attendance</button>
+            </div>
+            <p class="muted capture-hint" id="captureHint">Verification captures multiple live frames from your camera.</p>
+          </div>
+
+          <div class="card result-card" id="faceResultCard">
+            <h2>Verification Result</h2>
+            <div class="result-empty" id="faceResultEmpty">
+              Start the camera and verify attendance with your live face.
+            </div>
+            <div class="alert-banner hidden" id="restrictedBanner">
+              <strong>Restricted Activity</strong>
+              <p id="restrictedMessage"></p>
+            </div>
+            <div class="result-content hidden" id="faceResultContent">
+              <div class="person-card" id="personCard">
+                <img id="personPhoto" alt="Recognized person" />
+                <div>
+                  <h3 id="personName"></h3>
+                  <p id="personRole"></p>
+                  <p id="personDepartment"></p>
+                  <p id="personEmail"></p>
+                  <p id="personNotes"></p>
+                </div>
+              </div>
+              <p class="result-message" id="faceMessage"></p>
+              <p class="confidence" id="faceConfidence"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" id="register-panel">
+        <div class="grid two-col">
+          <div class="card">
+            <h2>Enroll a Person</h2>
+            <p>Add employees so the attendance camera can recognize them during live check-in.</p>
+            <form id="registerForm" class="register-form">
+              <label>
+                Person ID
+                <input name="person_id" placeholder="e.g. john-doe" required />
+              </label>
+              <label>
+                Full Name
+                <input name="name" placeholder="John Doe" required />
+              </label>
+              <label>
+                Role
+                <input name="role" placeholder="Engineer, Manager, HR..." />
+              </label>
+              <label>
+                Email
+                <input name="email" type="email" placeholder="john@company.com" />
+              </label>
+              <label>
+                Department
+                <input name="department" placeholder="Engineering" />
+              </label>
+              <label>
+                Notes
+                <textarea name="notes" rows="3" placeholder="Anything helpful to display after recognition"></textarea>
+              </label>
+              <label class="upload-zone compact" for="registerPhoto">
+                <input id="registerPhoto" name="photo" type="file" accept="image/*" required hidden />
+                <span id="registerPhotoLabel">Upload a clear front-facing photo</span>
+              </label>
+              <button class="primary-btn" type="submit">Register Person</button>
+            </form>
+          </div>
+
+          <div class="card">
+            <h2>Enrolled People</h2>
+            <div id="personList" class="person-list">
+              <p class="muted">Loading people...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Built by
+        <a href="https://github.com/Kunal-1919" target="_blank" rel="noopener noreferrer">Kunal Santosh Gawade</a>
+        · VisionAI v1.1
+      </p>
+    </footer>
+  </div>
+
+  <template id="personListItemTemplate">
+    <article class="person-list-item">
+      <img alt="" />
+      <div>
+        <h3></h3>
+        <p class="role"></p>
+        <p class="department"></p>
+      </div>
+    </article>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

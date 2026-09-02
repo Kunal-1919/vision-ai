@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+.env
+.env.local
+
+# Downloaded ML models (auto-fetched on first run)
+data/models/
+
+# Enrolled face photos (contain personal data)
+data/known_faces/*
+!data/known_faces/.gitkeep
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log

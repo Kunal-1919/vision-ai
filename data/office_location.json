@@ -1,0 +1,8 @@
+{
+  "name": "Leap India Office",
+  "latitude": 19.17273252804268,
+  "longitude": 72.86053980560689,
+  "radius_meters": 150,
+  "max_accuracy_meters": 100,
+  "enabled": true
+}

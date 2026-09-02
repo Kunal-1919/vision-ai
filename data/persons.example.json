@@ -1,0 +1,13 @@
+{
+  "persons": [
+    {
+      "id": "demo-user",
+      "name": "Demo User",
+      "role": "Software Engineer",
+      "email": "demo@example.com",
+      "department": "Engineering",
+      "photo_filename": "demo-user.jpg",
+      "notes": "Sample entry — replace with real enrollment via the UI"
+    }
+  ]
+}
