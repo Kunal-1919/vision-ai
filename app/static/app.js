@@ -2,6 +2,7 @@ const TOKEN_KEY = "visionai_token";
 
 const TAB_CONFIG = [
   { id: "dashboard", label: "Dashboard", roles: ["admin"] },
+  { id: "biometric", label: "Biometric Hardware", roles: ["admin"] },
   { id: "face", label: "Attendance Check-in", roles: ["employee"] },
   { id: "register", label: "Enroll Employee", roles: ["admin"] },
 ];
@@ -115,6 +116,7 @@ function activateTab(tabId) {
     panel.classList.toggle("active", panel.id === `${tabId}-panel`);
   });
   if (tabId === "dashboard") loadDashboard();
+  if (tabId === "biometric") loadBiometricDevices();
   if (tabId === "register") loadPersons();
 }
 
@@ -504,5 +506,84 @@ registerForm.addEventListener("submit", async (event) => {
     setLoading(submitButton, false);
   }
 });
+
+async function loadBiometricDevices() {
+  if (state.user?.role !== "admin") return;
+  const container = document.getElementById("biometricDeviceList");
+  try {
+    const data = await apiFetchJson("/api/biometric/devices");
+    container.innerHTML = "";
+    if (!data.devices?.length) {
+      container.innerHTML = '<p class="muted">No biometric terminals linked yet.</p>';
+      return;
+    }
+    data.devices.forEach((device) => {
+      const card = document.createElement("article");
+      card.className = "biometric-card";
+      card.innerHTML = `
+        <div class="biometric-header">
+          <div>
+            <h3>${device.name}</h3>
+            <span class="vendor-chip">${device.vendor} · ${device.device_type}</span>
+          </div>
+          <span class="status-chip ${device.status}">${device.status}</span>
+        </div>
+        <div class="biometric-details">
+          <p><strong>S/N:</strong> <code>${device.serial_number}</code></p>
+          <p><strong>IP Address:</strong> <code>${device.ip_address}</code></p>
+          <p><strong>Location:</strong> ${device.location}</p>
+          <p><strong>Firmware:</strong> ${device.firmware_version}</p>
+        </div>
+        <button class="delete-btn unlink-device-btn" type="button" data-id="${device.id}">Unlink Terminal</button>
+      `;
+      const unlinkBtn = card.querySelector(".unlink-device-btn");
+      unlinkBtn.addEventListener("click", async () => {
+        if (confirm(`Unlink biometric terminal '${device.name}'?`)) {
+          try {
+            await apiFetchJson(`/api/biometric/devices/${device.id}`, { method: "DELETE" });
+            await loadBiometricDevices();
+          } catch (err) {
+            alert(err.message);
+          }
+        }
+      });
+      container.appendChild(card);
+    });
+  } catch (error) {
+    container.innerHTML = `<p class="muted">Unable to load biometric terminals: ${error.message}</p>`;
+  }
+}
+
+const biometricDeviceForm = document.getElementById("biometricDeviceForm");
+if (biometricDeviceForm) {
+  biometricDeviceForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitBtn = biometricDeviceForm.querySelector("button[type='submit']");
+    setLoading(submitBtn, true, "Linking...");
+    const formData = new FormData(biometricDeviceForm);
+    const payload = {
+      name: formData.get("name"),
+      serial_number: formData.get("serial_number"),
+      ip_address: formData.get("ip_address"),
+      device_type: formData.get("device_type"),
+      vendor: formData.get("vendor"),
+      location: formData.get("location"),
+    };
+    try {
+      await apiFetchJson("/api/biometric/devices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      biometricDeviceForm.reset();
+      await loadBiometricDevices();
+      alert(`Linked biometric terminal '${payload.name}' successfully.`);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(submitBtn, false);
+    }
+  });
+}
 
 initSession();

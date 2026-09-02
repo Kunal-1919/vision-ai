@@ -118,6 +118,55 @@
         </div>
       </section>
 
+      <section class="panel" id="biometric-panel" data-roles="admin">
+        <div class="grid two-col">
+          <div class="card">
+            <h2>Connected Biometric Terminals</h2>
+            <p>Physical biometric hardware (ZKTeco, Hikvision, Suprema) streaming real-time event logs.</p>
+            <div id="biometricDeviceList" class="biometric-device-list">
+              <p class="muted">Loading biometric devices...</p>
+            </div>
+            <div class="webhook-info-box">
+              <p class="eyebrow">Integration Gateway Endpoint</p>
+              <code>POST /api/biometric/webhook</code>
+              <p class="muted small">Supports HTTP Push SDK, Wiegand-over-IP, and hardware webhooks.</p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Link Hardware Terminal</h2>
+            <p>Register physical biometric terminals, RFID gates, or palm readers to sync attendance logs.</p>
+            <form id="biometricDeviceForm" class="register-form">
+              <label>
+                Terminal Name
+                <input name="name" placeholder="e.g. Main Lobby Gate 1" required />
+              </label>
+              <label>
+                Serial Number
+                <input name="serial_number" placeholder="ZK-SF5L-9982" required />
+              </label>
+              <label>
+                IP Address
+                <input name="ip_address" placeholder="192.168.1.150" required />
+              </label>
+              <label>
+                Device Type
+                <input name="device_type" placeholder="Face + Fingerprint Reader" required />
+              </label>
+              <label>
+                Hardware Vendor
+                <input name="vendor" placeholder="ZKTeco, Hikvision, Suprema, Dahua" required />
+              </label>
+              <label>
+                Physical Location
+                <input name="location" placeholder="Building A Entrance" required />
+              </label>
+              <button class="primary-btn" type="submit">Link Terminal</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
       <section class="panel" id="face-panel" data-roles="employee">
         <div class="grid two-col">
           <div class="card">

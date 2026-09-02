@@ -1,5 +1,17 @@
 [
   {
+    "id": "ec4850a5",
+    "timestamp": "2026-09-02T10:09:57.015169+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "success",
+    "reason": "hardware_fingerprint",
+    "message": "Hardware check-in via FINGERPRINT (dev-b067cf)",
+    "confidence": 99.8,
+    "office_name": null,
+    "distance_meters": null
+  },
+  {
     "id": "74119bf6",
     "timestamp": "2026-09-02T08:55:04.346209+00:00",
     "person_id": "kunal-gawade",

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "dev-zk-01",
+    "name": "Main Entrance SpeedFace",
+    "serial_number": "ZK-SF5L-89421",
+    "ip_address": "192.168.1.105",
+    "device_type": "Face + Fingerprint + RFID Terminal",
+    "vendor": "ZKTeco",
+    "location": "HQ Lobby Turnstile A",
+    "status": "online",
+    "last_seen": "2026-09-02T10:09:56.444418+00:00",
+    "firmware_version": "v4.1.8-push"
+  },
+  {
+    "id": "dev-hik-02",
+    "name": "R&D Lab Face Gate",
+    "serial_number": "HK-DS-671M-1102",
+    "ip_address": "192.168.1.112",
+    "device_type": "AI Face Recognition Terminal",
+    "vendor": "Hikvision",
+    "location": "3rd Floor R&D Entrance",
+    "status": "online",
+    "last_seen": "2026-09-02T10:09:56.444438+00:00",
+    "firmware_version": "v3.2.0-ent"
+  },
+  {
+    "id": "dev-sup-03",
+    "name": "Server Room BioStation",
+    "serial_number": "SUP-BS3-90211",
+    "ip_address": "192.168.1.120",
+    "device_type": "Multimodal Fingerprint & Palm Vein Reader",
+    "vendor": "Suprema",
+    "location": "Data Center Security Airlock",
+    "status": "standby",
+    "last_seen": "2026-09-02T10:09:56.444441+00:00",
+    "firmware_version": "v2.9.5-sec"
+  }
+]

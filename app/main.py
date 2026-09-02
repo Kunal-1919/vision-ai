@@ -18,6 +18,7 @@ from app.auth import (
     get_current_user,
     get_user_store,
 )
+from app.biometric import BiometricManager
 from app.config import KNOWN_FACES_DIR, LIVENESS_MIN_FRAMES, SCENE_PHONE_THRESHOLD
 from app.face_recognizer import FaceRecognizer
 from app.geofence import GeofenceValidator
@@ -26,13 +27,14 @@ from app.scene_validator import SceneValidator
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 app = FastAPI(
-    title="VisionAI",
+    title="VisionAI Enterprise",
     description=(
-        "AI-powered secure attendance verification with RBAC, face recognition, "
-        "anti-spoofing, scene analysis, and GPS geofencing. "
+        "Enterprise-grade Multimodal Biometric & AI Attendance Verification System. "
+        "Integrates Edge AI face recognition, anti-spoofing liveness v2, GPS geofencing, "
+        "and physical hardware terminal push sync (ZKTeco, Hikvision, Suprema, Wiegand). "
         "Built by Kunal Santosh Gawade — https://github.com/Kunal-1919"
     ),
-    version="1.3.0",
+    version="2.0.0-enterprise",
 )
 
 app.add_middleware(
@@ -389,6 +391,81 @@ def delete_person(person_id: str, _: RequireAdmin) -> dict:
         raise HTTPException(status_code=404, detail="Person not found")
     get_user_store().delete_user_by_person_id(person_id)
     return {"message": f"Employee '{person_id}' deleted successfully."}
+
+
+class BiometricDeviceRegisterRequest(BaseModel):
+    name: str = Field(min_length=2)
+    serial_number: str = Field(min_length=3)
+    ip_address: str = Field(min_length=7)
+    device_type: str = Field(min_length=2)
+    vendor: str = Field(min_length=2)
+    location: str = Field(min_length=2)
+
+
+class BiometricWebhookPayload(BaseModel):
+    device_id: str
+    employee_id: str | None = None
+    auth_mode: str = "face"
+    status: str = "success"
+    confidence: float = 99.4
+    temperature_celsius: float | None = None
+
+
+@lru_cache
+def get_biometric_manager() -> BiometricManager:
+    return BiometricManager()
+
+
+@app.get("/api/biometric/devices")
+def list_biometric_devices(_: RequireAdmin) -> dict:
+    return {"devices": get_biometric_manager().list_devices()}
+
+
+@app.post("/api/biometric/devices")
+def register_biometric_device(payload: BiometricDeviceRegisterRequest, _: RequireAdmin) -> dict:
+    device = get_biometric_manager().register_device(
+        name=payload.name,
+        serial_number=payload.serial_number,
+        ip_address=payload.ip_address,
+        device_type=payload.device_type,
+        vendor=payload.vendor,
+        location=payload.location,
+    )
+    return {"message": "Biometric terminal registered successfully.", "device": device}
+
+
+@app.delete("/api/biometric/devices/{device_id}")
+def delete_biometric_device(device_id: str, _: RequireAdmin) -> dict:
+    deleted = get_biometric_manager().delete_device(device_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Biometric device not found.")
+    return {"message": "Biometric device unlinked successfully."}
+
+
+@app.post("/api/biometric/webhook")
+def biometric_webhook(payload: BiometricWebhookPayload) -> dict:
+    res = get_biometric_manager().ingest_hardware_event(
+        device_id=payload.device_id,
+        employee_id=payload.employee_id,
+        auth_mode=payload.auth_mode,
+        status=payload.status,
+        confidence=payload.confidence,
+        temperature_celsius=payload.temperature_celsius,
+    )
+    if payload.employee_id:
+        person_name = payload.employee_id
+        recognizer = get_face_recognizer()
+        if payload.employee_id in recognizer.persons:
+            person_name = recognizer.persons[payload.employee_id].name
+        get_attendance_logger().log(
+            status=payload.status,
+            reason=f"hardware_{payload.auth_mode}",
+            message=f"Hardware check-in via {payload.auth_mode.upper()} ({payload.device_id})",
+            person_id=payload.employee_id,
+            person_name=person_name,
+            confidence=payload.confidence,
+        )
+    return res
 
 
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
