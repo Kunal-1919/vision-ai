@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="VisionAI — AI image recognition and secure attendance verification with face recognition, anti-spoofing, and GPS geofencing." />
+  <meta name="description" content="VisionAI — AI-powered secure attendance with face recognition, anti-spoofing, scene analysis, and GPS geofencing." />
   <meta name="author" content="Kunal Santosh Gawade" />
-  <title>VisionAI | Secure Attendance & Image Recognition</title>
+  <title>VisionAI | Secure AI Attendance System</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
@@ -13,47 +13,78 @@
     <header class="hero">
       <div>
         <p class="eyebrow">Secure Attendance</p>
-        <h1>VisionAI Recognition System</h1>
+        <h1>VisionAI Attendance System</h1>
         <p class="subtitle">
-          Upload a pet photo to detect dogs and cats, or use live camera verification for secure attendance check-in.
+          AI-powered employee check-in with live face verification, anti-spoof protection, phone detection, and office geofencing.
         </p>
       </div>
       <div class="status-pill" id="healthStatus">Checking service...</div>
     </header>
 
     <nav class="tabs" role="tablist">
-      <button class="tab active" data-tab="pet" role="tab">Pet Recognition</button>
+      <button class="tab active" data-tab="dashboard" role="tab">Dashboard</button>
       <button class="tab" data-tab="face" role="tab">Attendance Check-in</button>
       <button class="tab" data-tab="register" role="tab">Register Person</button>
     </nav>
 
     <main>
-      <section class="panel active" id="pet-panel">
-        <div class="grid two-col">
+      <section class="panel active" id="dashboard-panel">
+        <div class="stats-grid" id="statsGrid">
+          <article class="stat-card">
+            <p class="stat-label">Enrolled Employees</p>
+            <p class="stat-value" id="statEnrolled">—</p>
+          </article>
+          <article class="stat-card success">
+            <p class="stat-label">Check-ins Today</p>
+            <p class="stat-value" id="statCheckins">—</p>
+          </article>
+          <article class="stat-card warning">
+            <p class="stat-label">Blocked Attempts Today</p>
+            <p class="stat-value" id="statBlocked">—</p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">Total Check-ins</p>
+            <p class="stat-value" id="statTotal">—</p>
+          </article>
+        </div>
+
+        <div class="grid two-col dashboard-grid">
           <div class="card">
-            <h2>Upload Pet Image</h2>
-            <p>Drop a dog or cat photo. The model will classify it instantly.</p>
-            <label class="upload-zone" for="petInput">
-              <input id="petInput" type="file" accept="image/*" hidden />
-              <span>Click or drag an image here</span>
-            </label>
-            <div class="preview-wrap hidden" id="petPreviewWrap">
-              <img id="petPreview" alt="Pet preview" />
-            </div>
-            <button class="primary-btn" id="petClassifyBtn" disabled>Recognize Pet</button>
+            <h2>Security Pipeline</h2>
+            <p>Every attendance attempt passes through four AI verification layers.</p>
+            <ol class="pipeline-list">
+              <li><strong>Geofence</strong> — GPS office premises validation</li>
+              <li><strong>Scene AI</strong> — Phone &amp; device detection in frame</li>
+              <li><strong>Liveness</strong> — Anti-spoof live face verification</li>
+              <li><strong>Face Match</strong> — Identity recognition</li>
+            </ol>
           </div>
 
-          <div class="card result-card" id="petResultCard">
-            <h2>Result</h2>
-            <div class="result-empty" id="petResultEmpty">
-              Upload an image to see whether it is a dog or a cat.
+          <div class="card">
+            <h2>Blocked Today by Reason</h2>
+            <div id="blockedReasons" class="reason-list">
+              <p class="muted">No blocked attempts today.</p>
             </div>
-            <div class="result-content hidden" id="petResultContent">
-              <div class="badge" id="petBadge">Dog</div>
-              <p class="result-message" id="petMessage"></p>
-              <p class="confidence" id="petConfidence"></p>
-              <ul class="prediction-list" id="petPredictions"></ul>
-            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Recent Attendance Log</h2>
+          <div class="log-table-wrap">
+            <table class="log-table" id="attendanceLogTable">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Employee</th>
+                  <th>Status</th>
+                  <th>Reason</th>
+                  <th>Message</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceLogBody">
+                <tr><td colspan="5" class="muted">Loading attendance records...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -62,10 +93,9 @@
         <div class="grid two-col">
           <div class="card">
             <h2>Live Attendance Camera</h2>
-            <p>Look directly at the camera. The system verifies you are live and blocks photos or phone screens.</p>
+            <p>Look directly at the camera. Keep phones and devices out of the frame.</p>
             <div class="security-note">
-              Attendance requires live face verification and your physical presence at the office premises.
-              Photos, phone screens, and remote check-ins from home are blocked.
+              Attendance requires office presence, live face verification, and no phones or screens in the camera view.
             </div>
             <div class="location-status" id="locationStatus">
               <span class="location-dot" id="locationDot"></span>
@@ -161,7 +191,7 @@
       <p>
         Built by
         <a href="https://github.com/Kunal-1919" target="_blank" rel="noopener noreferrer">Kunal Santosh Gawade</a>
-        · VisionAI v1.1
+        · VisionAI v1.2
       </p>
     </footer>
   </div>
