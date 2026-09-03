@@ -19,7 +19,7 @@ from app.auth import (
     get_user_store,
 )
 from app.biometric import BiometricManager
-from app.config import KNOWN_FACES_DIR, LIVENESS_MIN_FRAMES, SCENE_PHONE_THRESHOLD
+from app.config import APP_ENV, KNOWN_FACES_DIR, LIVENESS_MIN_FRAMES, SCENE_PHONE_THRESHOLD
 from app.face_recognizer import FaceRecognizer
 from app.geofence import GeofenceValidator
 from app.scene_validator import SceneValidator
@@ -122,7 +122,12 @@ def _blocked_response(
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "ok", "service": "vision-ai", "version": "1.3.0"}
+    return {
+        "status": "ok",
+        "service": "vision-ai-enterprise",
+        "version": "2.0.0-enterprise",
+        "env": APP_ENV,
+    }
 
 
 @app.post("/api/auth/login")

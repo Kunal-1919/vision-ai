@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  visionai:
+    container_name: visionai-${ENV:-local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8088}:${PORT:-8088}"
+    env_file:
+      - ${ENV_FILE:-.env}
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-8088}/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

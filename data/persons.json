@@ -8,6 +8,15 @@
       "department": "Engineering",
       "photo_filename": "kunal-gawade.jpg",
       "notes": "Lead Developer"
+    },
+    {
+      "id": "tmhepl476",
+      "name": "Rabi",
+      "role": "Manager",
+      "email": "rabi.p@leapindia.net",
+      "department": "IT",
+      "photo_filename": "tmhepl476.jpg",
+      "notes": ""
     }
   ]
 }

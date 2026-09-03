@@ -1,5 +1,65 @@
 [
   {
+    "id": "de5d7a00",
+    "timestamp": "2026-09-03T05:14:22.922123+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "success",
+    "reason": "verified",
+    "message": "Attendance verified. Welcome, Kunal Gawade!",
+    "confidence": 74.31,
+    "office_name": "Leap India Office",
+    "distance_meters": 100.96
+  },
+  {
+    "id": "46e8d54d",
+    "timestamp": "2026-09-03T04:48:05.432865+00:00",
+    "person_id": "tmhepl476",
+    "person_name": "Rabi",
+    "status": "success",
+    "reason": "verified",
+    "message": "Attendance verified. Welcome, Rabi!",
+    "confidence": 81.95,
+    "office_name": "Leap India Office",
+    "distance_meters": 99.34
+  },
+  {
+    "id": "d7321cc8",
+    "timestamp": "2026-09-03T04:40:18.259349+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "blocked",
+    "reason": "face_mismatch",
+    "message": "Face detected, but no matching person found.",
+    "confidence": 22.83,
+    "office_name": "Leap India Office",
+    "distance_meters": 87.76
+  },
+  {
+    "id": "55a6aae1",
+    "timestamp": "2026-09-03T04:40:08.862977+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "blocked",
+    "reason": "face_mismatch",
+    "message": "Face detected, but no matching person found.",
+    "confidence": 14.75,
+    "office_name": "Leap India Office",
+    "distance_meters": 87.76
+  },
+  {
+    "id": "3807fbcf",
+    "timestamp": "2026-09-03T04:39:55.739801+00:00",
+    "person_id": "kunal-gawade",
+    "person_name": "Kunal Gawade",
+    "status": "success",
+    "reason": "verified",
+    "message": "Attendance verified. Welcome, Kunal Gawade!",
+    "confidence": 73.22,
+    "office_name": "Leap India Office",
+    "distance_meters": 101.85
+  },
+  {
     "id": "ec4850a5",
     "timestamp": "2026-09-02T10:09:57.015169+00:00",
     "person_id": "kunal-gawade",
