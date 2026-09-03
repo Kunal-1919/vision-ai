@@ -1,5 +1,6 @@
 import json
 import math
+import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -17,40 +18,55 @@ class OfficeLocation:
 
     @classmethod
     def from_file(cls, path: Path = OFFICE_LOCATION_FILE) -> "OfficeLocation":
+        # Environment Variable Overrides
+        env_enabled = os.environ.get("GEOFENCE_ENABLED")
+        env_lat = os.environ.get("OFFICE_LATITUDE")
+        env_lon = os.environ.get("OFFICE_LONGITUDE")
+        env_radius = os.environ.get("OFFICE_RADIUS_METERS")
+        env_max_acc = os.environ.get("OFFICE_MAX_ACCURACY_METERS")
+        env_name = os.environ.get("OFFICE_NAME")
+
         if not path.exists():
             default = cls(
-                name="Office Premises",
-                latitude=19.0760,
-                longitude=72.8777,
-                radius_meters=150.0,
-                max_accuracy_meters=100.0,
-                enabled=True,
+                name=env_name or "Leap India Office Premises",
+                latitude=float(env_lat) if env_lat else 19.1727325,
+                longitude=float(env_lon) if env_lon else 72.8605398,
+                radius_meters=float(env_radius) if env_radius else 300.0,
+                max_accuracy_meters=float(env_max_acc) if env_max_acc else 150.0,
+                enabled=env_enabled.lower() == "true" if env_enabled else True,
             )
-            path.write_text(
-                json.dumps(
-                    {
-                        "name": default.name,
-                        "latitude": default.latitude,
-                        "longitude": default.longitude,
-                        "radius_meters": default.radius_meters,
-                        "max_accuracy_meters": default.max_accuracy_meters,
-                        "enabled": default.enabled,
-                    },
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
+            default.save(path)
             return default
 
-        with path.open(encoding="utf-8") as handle:
-            payload = json.load(handle)
+        try:
+            with path.open(encoding="utf-8") as handle:
+                payload = json.load(handle)
+        except Exception:
+            payload = {}
+
         return cls(
-            name=payload.get("name", "Office Premises"),
-            latitude=float(payload["latitude"]),
-            longitude=float(payload["longitude"]),
-            radius_meters=float(payload.get("radius_meters", 150)),
-            max_accuracy_meters=float(payload.get("max_accuracy_meters", 100)),
-            enabled=bool(payload.get("enabled", True)),
+            name=env_name or payload.get("name", "Leap India Office Premises"),
+            latitude=float(env_lat) if env_lat else float(payload.get("latitude", 19.1727325)),
+            longitude=float(env_lon) if env_lon else float(payload.get("longitude", 72.8605398)),
+            radius_meters=float(env_radius) if env_radius else float(payload.get("radius_meters", 300)),
+            max_accuracy_meters=float(env_max_acc) if env_max_acc else float(payload.get("max_accuracy_meters", 150)),
+            enabled=env_enabled.lower() == "true" if env_enabled is not None else bool(payload.get("enabled", True)),
+        )
+
+    def save(self, path: Path = OFFICE_LOCATION_FILE) -> None:
+        path.write_text(
+            json.dumps(
+                {
+                    "name": self.name,
+                    "latitude": self.latitude,
+                    "longitude": self.longitude,
+                    "radius_meters": self.radius_meters,
+                    "max_accuracy_meters": self.max_accuracy_meters,
+                    "enabled": self.enabled,
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
         )
 
 
@@ -77,11 +93,40 @@ class GeofenceValidator:
 
     MISSING_LOCATION_MESSAGE = (
         "This activity is restricted. Office location is required for attendance check-in. "
-        "Please allow location access and try again."
+        "Please allow location access on your phone browser and try again."
     )
 
-    def __init__(self, office: OfficeLocation | None = None):
-        self.office = office or OfficeLocation.from_file()
+    def __init__(self, office_file: Path = OFFICE_LOCATION_FILE):
+        self.office_file = office_file
+
+    def get_office(self) -> OfficeLocation:
+        return OfficeLocation.from_file(self.office_file)
+
+    def update_config(
+        self,
+        name: str | None = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        radius_meters: float | None = None,
+        max_accuracy_meters: float | None = None,
+        enabled: bool | None = None,
+    ) -> OfficeLocation:
+        office = self.get_office()
+        if name is not None:
+            office.name = name
+        if latitude is not None:
+            office.latitude = latitude
+        if longitude is not None:
+            office.longitude = longitude
+        if radius_meters is not None:
+            office.radius_meters = radius_meters
+        if max_accuracy_meters is not None:
+            office.max_accuracy_meters = max_accuracy_meters
+        if enabled is not None:
+            office.enabled = enabled
+
+        office.save(self.office_file)
+        return office
 
     def validate(
         self,
@@ -89,12 +134,14 @@ class GeofenceValidator:
         longitude: float | None,
         accuracy_meters: float | None = None,
     ) -> GeofenceResult:
-        if not self.office.enabled:
+        office = self.get_office()
+
+        if not office.enabled:
             return GeofenceResult(
                 allowed=True,
                 restricted=False,
-                message="Office geofence disabled.",
-                office_name=self.office.name,
+                message="Office geofence is currently disabled.",
+                office_name=office.name,
             )
 
         if latitude is None or longitude is None:
@@ -102,32 +149,35 @@ class GeofenceValidator:
                 allowed=False,
                 restricted=True,
                 message=self.MISSING_LOCATION_MESSAGE,
-                office_name=self.office.name,
+                office_name=office.name,
             )
 
-        if accuracy_meters is not None and accuracy_meters > self.office.max_accuracy_meters:
+        if accuracy_meters is not None and accuracy_meters > office.max_accuracy_meters:
             return GeofenceResult(
                 allowed=False,
                 restricted=True,
-                message=self.ACCURACY_MESSAGE,
-                office_name=self.office.name,
+                message=(
+                    f"Location accuracy is too low ({int(accuracy_meters)}m, max allowed {int(office.max_accuracy_meters)}m). "
+                    "Please move near a window or turn on Precise Location in phone settings."
+                ),
+                office_name=office.name,
                 accuracy_meters=accuracy_meters,
             )
 
         distance = self._distance_meters(
             latitude,
             longitude,
-            self.office.latitude,
-            self.office.longitude,
+            office.latitude,
+            office.longitude,
         )
 
-        if distance <= self.office.radius_meters:
+        if distance <= office.radius_meters:
             return GeofenceResult(
                 allowed=True,
                 restricted=False,
-                message=f"Location verified at {self.office.name}.",
+                message=f"Location verified at {office.name}.",
                 distance_meters=round(distance, 2),
-                office_name=self.office.name,
+                office_name=office.name,
                 accuracy_meters=accuracy_meters,
             )
 
@@ -136,19 +186,22 @@ class GeofenceValidator:
             restricted=True,
             message=(
                 f"{self.RESTRICTED_MESSAGE} "
-                f"You are approximately {int(distance)} meters away from {self.office.name}."
+                f"You are approximately {int(distance)} meters away from {office.name}."
             ),
             distance_meters=round(distance, 2),
-            office_name=self.office.name,
+            office_name=office.name,
             accuracy_meters=accuracy_meters,
         )
 
     def public_config(self) -> dict:
+        office = self.get_office()
         return {
-            "enabled": self.office.enabled,
-            "office_name": self.office.name,
-            "radius_meters": self.office.radius_meters,
-            "max_accuracy_meters": self.office.max_accuracy_meters,
+            "enabled": office.enabled,
+            "office_name": office.name,
+            "latitude": office.latitude,
+            "longitude": office.longitude,
+            "radius_meters": office.radius_meters,
+            "max_accuracy_meters": office.max_accuracy_meters,
         }
 
     @staticmethod

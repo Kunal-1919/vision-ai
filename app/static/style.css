@@ -659,6 +659,45 @@ button {
   font-size: 0.9rem;
 }
 
+.geofence-admin-card {
+  margin-bottom: 20px;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.card-header-row h2 {
+  margin: 0;
+}
+
+.geofence-admin-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.geofence-admin-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.geofence-admin-form input,
+.geofence-admin-form select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  padding: 12px 14px;
+  font: inherit;
+}
+
 @media (max-width: 900px) {
   .hero,
   .grid.two-col,

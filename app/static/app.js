@@ -361,8 +361,23 @@ async function loadAttendanceConfig() {
   if (!state.token) return;
   try {
     state.attendanceConfig = await apiFetchJson("/api/attendance/config");
+    const chip = document.getElementById("adminGeofenceStatusChip");
+    if (chip) {
+      chip.textContent = state.attendanceConfig.enabled ? "Geofence Active" : "Geofence Disabled";
+      chip.className = `status-chip ${state.attendanceConfig.enabled ? "success" : "blocked"}`;
+    }
+    const nameEl = document.getElementById("geoAdminName");
+    if (nameEl) {
+      nameEl.value = state.attendanceConfig.office_name || "";
+      document.getElementById("geoAdminEnabled").value = String(state.attendanceConfig.enabled);
+      document.getElementById("geoAdminLat").value = state.attendanceConfig.latitude ?? "";
+      document.getElementById("geoAdminLon").value = state.attendanceConfig.longitude ?? "";
+      document.getElementById("geoAdminRadius").value = state.attendanceConfig.radius_meters ?? "";
+      document.getElementById("geoAdminMaxAcc").value = state.attendanceConfig.max_accuracy_meters ?? "";
+    }
+
     if (!state.attendanceConfig.enabled) {
-      setLocationStatus("warning", "Office geofence is currently disabled.");
+      setLocationStatus("warning", "Office geofence is currently disabled (testing mode).");
       return;
     }
     setLocationStatus(
@@ -580,6 +595,50 @@ if (biometricDeviceForm) {
       alert(`Linked biometric terminal '${payload.name}' successfully.`);
     } catch (error) {
       alert(error.message);
+    } finally {
+      setLoading(submitBtn, false);
+    }
+const useCurrentGpsBtn = document.getElementById("useCurrentGpsBtn");
+if (useCurrentGpsBtn) {
+  useCurrentGpsBtn.addEventListener("click", async () => {
+    setLoading(useCurrentGpsBtn, true, "Acquiring GPS...");
+    try {
+      const pos = await getCurrentPosition();
+      document.getElementById("geoAdminLat").value = pos.coords.latitude.toFixed(7);
+      document.getElementById("geoAdminLon").value = pos.coords.longitude.toFixed(7);
+      alert(`Acquired GPS position: Lat ${pos.coords.latitude.toFixed(6)}, Lon ${pos.coords.longitude.toFixed(6)} (Accuracy ${Math.round(pos.coords.accuracy)}m). Click "Save Geofence Configuration" to save.`);
+    } catch (err) {
+      alert(`GPS Error: ${err.message}`);
+    } finally {
+      setLoading(useCurrentGpsBtn, false);
+    }
+  });
+}
+
+const adminGeofenceForm = document.getElementById("adminGeofenceForm");
+if (adminGeofenceForm) {
+  adminGeofenceForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitBtn = adminGeofenceForm.querySelector("button[type='submit']");
+    setLoading(submitBtn, true, "Saving...");
+    const payload = {
+      name: document.getElementById("geoAdminName").value,
+      enabled: document.getElementById("geoAdminEnabled").value === "true",
+      latitude: parseFloat(document.getElementById("geoAdminLat").value),
+      longitude: parseFloat(document.getElementById("geoAdminLon").value),
+      radius_meters: parseFloat(document.getElementById("geoAdminRadius").value),
+      max_accuracy_meters: parseFloat(document.getElementById("geoAdminMaxAcc").value),
+    };
+    try {
+      await apiFetchJson("/api/attendance/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      await loadAttendanceConfig();
+      alert(`Geofence settings updated successfully for '${payload.name}'.`);
+    } catch (err) {
+      alert(`Failed to update geofence: ${err.message}`);
     } finally {
       setLoading(submitBtn, false);
     }

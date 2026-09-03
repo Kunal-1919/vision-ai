@@ -144,9 +144,34 @@ def auth_me(current_user: RequireAuth) -> dict:
     return {"user": current_user.to_public_dict()}
 
 
+class AttendanceConfigUpdateRequest(BaseModel):
+    name: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    radius_meters: float | None = None
+    max_accuracy_meters: float | None = None
+    enabled: bool | None = None
+
+
 @app.get("/api/attendance/config")
 def attendance_config(_: RequireAuth) -> dict:
     return get_geofence_validator().public_config()
+
+
+@app.post("/api/attendance/config")
+def update_attendance_config(payload: AttendanceConfigUpdateRequest, _: RequireAdmin) -> dict:
+    get_geofence_validator().update_config(
+        name=payload.name,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        radius_meters=payload.radius_meters,
+        max_accuracy_meters=payload.max_accuracy_meters,
+        enabled=payload.enabled,
+    )
+    return {
+        "message": "Office geofence updated successfully.",
+        "config": get_geofence_validator().public_config(),
+    }
 
 
 @app.get("/api/attendance/stats")

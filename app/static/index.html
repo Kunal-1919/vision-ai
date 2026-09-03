@@ -97,6 +97,49 @@
           </div>
         </div>
 
+        <div class="card geofence-admin-card">
+          <div class="card-header-row">
+            <h2>Office GPS Geofence Settings</h2>
+            <span class="status-chip" id="adminGeofenceStatusChip">Checking...</span>
+          </div>
+          <p>Configure allowed GPS boundaries or toggle geofencing for UAT/remote testing.</p>
+          <form id="adminGeofenceForm" class="geofence-admin-form">
+            <div class="grid two-col">
+              <label>
+                Office Name
+                <input name="name" id="geoAdminName" placeholder="Leap India Office" required />
+              </label>
+              <label>
+                Geofence Security Mode
+                <select name="enabled" id="geoAdminEnabled">
+                  <option value="true">Enabled — Strict Office Premises Check</option>
+                  <option value="false">Disabled — Allow Attendance Anywhere (Testing)</option>
+                </select>
+              </label>
+              <label>
+                Latitude
+                <input name="latitude" id="geoAdminLat" type="number" step="any" placeholder="19.1727" required />
+              </label>
+              <label>
+                Longitude
+                <input name="longitude" id="geoAdminLon" type="number" step="any" placeholder="72.8605" required />
+              </label>
+              <label>
+                Radius (Meters)
+                <input name="radius_meters" id="geoAdminRadius" type="number" placeholder="300" required />
+              </label>
+              <label>
+                Max Allowed Device Accuracy (Meters)
+                <input name="max_accuracy_meters" id="geoAdminMaxAcc" type="number" placeholder="150" required />
+              </label>
+            </div>
+            <div class="button-row">
+              <button class="secondary-btn" id="useCurrentGpsBtn" type="button">Use My Current GPS Position</button>
+              <button class="primary-btn" type="submit">Save Geofence Configuration</button>
+            </div>
+          </form>
+        </div>
+
         <div class="card">
           <h2>Recent Attendance Log</h2>
           <div class="log-table-wrap">
