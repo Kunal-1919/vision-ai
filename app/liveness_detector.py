@@ -54,17 +54,28 @@ class LivenessDetector:
             checks["static_replay"] = self._static_replay_score(images, face_box)
             checks["rigid_surface"] = self._rigid_surface_score(images, face_box)
         else:
-            checks["static_replay"] = 0.55
-            checks["rigid_surface"] = 0.45
+            checks["static_replay"] = 0.35
+            checks["rigid_surface"] = 0.35
+
+        # Screen Moiré grid and Display Cast are the definitive indicators of a screen/printed photo replay
+        screen_pattern = checks["screen_pattern"]
+        display_cast = checks["display_color_cast"]
+
+        # If there is no screen moiré pattern and no artificial display cast, dampen false positives caused by mobile camera skin smoothing & auto-exposure
+        if screen_pattern < 0.38 and display_cast < 0.38:
+            checks["flat_texture"] *= 0.35
+            checks["digital_sharpness"] *= 0.35
+            checks["static_replay"] *= 0.40
+            checks["rigid_surface"] *= 0.40
 
         spoof_score = (
-            checks["screen_pattern"] * 0.22
-            + checks["display_color_cast"] * 0.12
+            checks["screen_pattern"] * 0.30
+            + checks["display_color_cast"] * 0.20
             + checks["specular_glare"] * 0.15
-            + checks["flat_texture"] * 0.15
-            + checks["digital_sharpness"] * 0.08
-            + checks["static_replay"] * 0.16
-            + checks["rigid_surface"] * 0.12
+            + checks["flat_texture"] * 0.10
+            + checks["digital_sharpness"] * 0.05
+            + checks["static_replay"] * 0.10
+            + checks["rigid_surface"] * 0.10
         )
 
         is_live = spoof_score < LIVENESS_SPOOF_THRESHOLD
@@ -128,22 +139,22 @@ class LivenessDetector:
         sat_mean = saturation.mean() / 255.0
 
         score = 0.0
-        if blue_ratio > 0.36:
-            score += min(1.0, (blue_ratio - 0.36) * 5.0)
-        if red_ratio < 0.28:
-            score += min(1.0, (0.28 - red_ratio) * 4.0)
-        if sat_mean > 0.42:
-            score += min(1.0, (sat_mean - 0.42) * 2.5)
+        if blue_ratio > 0.38:
+            score += min(1.0, (blue_ratio - 0.38) * 5.0)
+        if red_ratio < 0.26:
+            score += min(1.0, (0.26 - red_ratio) * 4.0)
+        if sat_mean > 0.48:
+            score += min(1.0, (sat_mean - 0.48) * 2.5)
         return min(1.0, score / 2.2)
 
     def _specular_glare_score(self, roi: np.ndarray) -> float:
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        bright = (gray > 235).astype(np.uint8)
+        bright = (gray > 240).astype(np.uint8)
         bright_ratio = bright.mean()
 
         hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
         value = hsv[:, :, 2]
-        very_bright = (value > 245).astype(np.uint8)
+        very_bright = (value > 248).astype(np.uint8)
         cluster_ratio = very_bright.mean()
 
         score = min(1.0, bright_ratio * 8.0)
@@ -193,7 +204,7 @@ class LivenessDetector:
             diffs.append(diff)
 
         if not diffs:
-            return 0.6
+            return 0.4
 
         mean_diff = float(np.mean(diffs))
         if mean_diff < 1.2:
@@ -216,7 +227,7 @@ class LivenessDetector:
                 continue
 
             if face_motion < 0.8 and surround_motion < 0.8:
-                scores.append(0.75)
+                scores.append(0.35)
                 continue
 
             ratio = min(face_motion, surround_motion) / (max(face_motion, surround_motion) + 1e-6)
