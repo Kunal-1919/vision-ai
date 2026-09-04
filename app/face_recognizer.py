@@ -214,7 +214,11 @@ class FaceRecognizer:
         }
         PERSONS_FILE.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    def recognize(self, image_bytes_list: list[bytes]) -> FaceMatch:
+    def recognize(
+        self,
+        image_bytes_list: list[bytes],
+        expected_person_id: str | None = None,
+    ) -> FaceMatch:
         if not image_bytes_list:
             return FaceMatch(
                 recognized=False,
@@ -263,18 +267,25 @@ class FaceRecognizer:
         best_id = None
         best_score = -1.0
 
-        for person_id, embedding in self.embeddings.items():
-            score = float(self.recognizer.match(probe, embedding, cv2.FaceRecognizerSF_FR_COSINE))
-            if score > best_score:
+        if expected_person_id and expected_person_id in self.embeddings:
+            score = float(self.recognizer.match(probe, self.embeddings[expected_person_id], cv2.FaceRecognizerSF_FR_COSINE))
+            if score >= FACE_MATCH_THRESHOLD:
+                best_id = expected_person_id
                 best_score = score
-                best_id = person_id
+
+        if best_id is None:
+            for person_id, embedding in self.embeddings.items():
+                score = float(self.recognizer.match(probe, embedding, cv2.FaceRecognizerSF_FR_COSINE))
+                if score > best_score:
+                    best_score = score
+                    best_id = person_id
 
         if best_id is None or best_score < FACE_MATCH_THRESHOLD:
             return FaceMatch(
                 recognized=False,
                 person=None,
                 confidence=round(max(best_score, 0.0) * 100, 2),
-                message="Face detected, but no matching person found.",
+                message="Face detected, but no matching person found. Please ensure good lighting and face the camera directly.",
                 face_box=self._face_box(face),
             )
 

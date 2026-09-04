@@ -256,7 +256,10 @@ async def recognize_face(
             person_name=current_user.name,
         )
 
-    result = get_face_recognizer().recognize(image_bytes_list)
+    result = get_face_recognizer().recognize(
+        image_bytes_list,
+        expected_person_id=current_user.person_id,
+    )
     logger = get_attendance_logger()
 
     if result.restricted:

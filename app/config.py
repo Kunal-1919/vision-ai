@@ -17,7 +17,7 @@ JWT_SECRET = os.environ.get("VISIONAI_JWT_SECRET", "visionai-dev-secret-change-i
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRE_HOURS = int(os.environ.get("VISIONAI_JWT_EXPIRE_HOURS", "12"))
 
-FACE_MATCH_THRESHOLD = float(os.environ.get("FACE_MATCH_THRESHOLD", "0.363"))
+FACE_MATCH_THRESHOLD = float(os.environ.get("FACE_MATCH_THRESHOLD", "0.28"))
 SCENE_PHONE_THRESHOLD = float(os.environ.get("SCENE_PHONE_THRESHOLD", "0.12"))
 LIVENESS_SPOOF_THRESHOLD = float(os.environ.get("LIVENESS_SPOOF_THRESHOLD", "0.65"))
 LIVENESS_MIN_FRAMES = int(os.environ.get("LIVENESS_MIN_FRAMES", "3"))
