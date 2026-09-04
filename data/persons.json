@@ -1,21 +1,21 @@
 {
   "persons": [
     {
-      "id": "kunal-gawade",
-      "name": "Kunal Gawade",
-      "role": "AI Engineer",
-      "email": "kunal@company.com",
-      "department": "Engineering",
-      "photo_filename": "kunal-gawade.jpg",
-      "notes": "Lead Developer"
-    },
-    {
       "id": "tmhepl476",
       "name": "Rabi",
       "role": "Manager",
       "email": "rabi.p@leapindia.net",
       "department": "IT",
       "photo_filename": "tmhepl476.jpg",
+      "notes": ""
+    },
+    {
+      "id": "lipl883",
+      "name": "Kunal Santosh Gawade",
+      "role": "IT Engineer",
+      "email": "kunalgawade1921@gmail.com",
+      "department": "IT",
+      "photo_filename": "lipl883.jpg",
       "notes": ""
     }
   ]

@@ -338,21 +338,34 @@ function setLocationStatus(mode, text) {
 function getCurrentPosition() {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
-      reject(new Error("Geolocation is not supported on this device."));
+      reject(new Error("Geolocation is not supported on this mobile device."));
       return;
     }
+
+    // Stage 1: High accuracy GPS lookup (6s timeout)
     navigator.geolocation.getCurrentPosition(
       (position) => resolve(position),
       (error) => {
-        if (error.code === error.PERMISSION_DENIED) {
-          reject(new Error("Location permission denied. Attendance requires office location access."));
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          reject(new Error("Unable to determine your location. Please try again at the office."));
+        // Stage 2: Fallback to standard cellular/Wi-Fi positioning if GPS times out or fails indoors
+        if (error.code === error.TIMEOUT || error.code === error.POSITION_UNAVAILABLE) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve(pos),
+            (err2) => {
+              if (err2.code === err2.PERMISSION_DENIED) {
+                reject(new Error("Location permission denied. Please allow location access in your mobile browser settings."));
+              } else {
+                reject(new Error("Unable to determine location. Please turn on location services on your mobile phone."));
+              }
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 15000 },
+          );
+        } else if (error.code === error.PERMISSION_DENIED) {
+          reject(new Error("Location permission denied. Please allow location access in your mobile browser settings."));
         } else {
-          reject(new Error("Location request timed out. Please try again."));
+          reject(new Error("Location request timed out. Please ensure GPS is enabled."));
         }
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 6000, maximumAge: 5000 },
     );
   });
 }
@@ -390,30 +403,50 @@ async function loadAttendanceConfig() {
 }
 
 async function verifyOfficeLocation() {
-  if (state.attendanceConfig && !state.attendanceConfig.enabled) return null;
-  setLocationStatus("warning", "Checking your office location...");
-  const position = await getCurrentPosition();
-  const { accuracy } = position.coords;
-  if (state.attendanceConfig && accuracy > state.attendanceConfig.max_accuracy_meters) {
-    throw new Error(
-      `Location accuracy is too low (${Math.round(accuracy)}m). Move near a window or enable precise location.`,
-    );
+  if (state.attendanceConfig && !state.attendanceConfig.enabled) {
+    setLocationStatus("warning", "Office geofence is currently disabled.");
+    return null;
   }
-  setLocationStatus("ready", `Location captured with ${Math.round(accuracy)}m accuracy.`);
-  return position;
+  setLocationStatus("warning", "Checking your office location...");
+  try {
+    const position = await getCurrentPosition();
+    const { accuracy } = position.coords;
+    if (state.attendanceConfig && accuracy > state.attendanceConfig.max_accuracy_meters) {
+      throw new Error(
+        `Location accuracy is too low (${Math.round(accuracy)}m, max allowed ${state.attendanceConfig.max_accuracy_meters}m). Move near a window or turn on Precise Location in phone settings.`,
+      );
+    }
+    setLocationStatus("ready", `Location captured with ${Math.round(accuracy)}m accuracy.`);
+    return position;
+  } catch (err) {
+    if (state.attendanceConfig && !state.attendanceConfig.enabled) {
+      setLocationStatus("warning", "Office geofence is disabled.");
+      return null;
+    }
+    throw err;
+  }
 }
 
 startCameraBtn.addEventListener("click", async () => {
   try {
     if (state.cameraStream) state.cameraStream.getTracks().forEach((t) => t.stop());
     state.cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "user" }, audio: false,
+      video: { facingMode: "user" },
+      audio: false,
     });
     cameraVideo.srcObject = state.cameraStream;
+    await cameraVideo.play().catch(() => {});
+
+    let attempts = 0;
+    while ((!cameraVideo.videoWidth || !cameraVideo.videoHeight) && attempts < 20) {
+      await sleep(100);
+      attempts += 1;
+    }
+
     captureFaceBtn.disabled = false;
     captureHint.textContent = "Camera ready. Keep phones out of frame, then verify attendance.";
-  } catch {
-    alert("Unable to access camera. Please allow camera permission.");
+  } catch (err) {
+    alert("Unable to access camera. Please allow camera permission in your browser settings.");
   }
 });
 
