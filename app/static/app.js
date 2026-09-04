@@ -403,6 +403,13 @@ async function loadAttendanceConfig() {
 }
 
 async function verifyOfficeLocation() {
+  if (!state.attendanceConfig) {
+    try {
+      state.attendanceConfig = await apiFetchJson("/api/attendance/config");
+    } catch {
+      state.attendanceConfig = { enabled: false };
+    }
+  }
   if (state.attendanceConfig && !state.attendanceConfig.enabled) {
     setLocationStatus("warning", "Office geofence is currently disabled.");
     return null;
@@ -419,7 +426,7 @@ async function verifyOfficeLocation() {
     setLocationStatus("ready", `Location captured with ${Math.round(accuracy)}m accuracy.`);
     return position;
   } catch (err) {
-    if (state.attendanceConfig && !state.attendanceConfig.enabled) {
+    if (!state.attendanceConfig || !state.attendanceConfig.enabled) {
       setLocationStatus("warning", "Office geofence is disabled.");
       return null;
     }
