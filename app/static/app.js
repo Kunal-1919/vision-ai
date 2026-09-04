@@ -598,6 +598,9 @@ if (biometricDeviceForm) {
     } finally {
       setLoading(submitBtn, false);
     }
+  });
+}
+
 const useCurrentGpsBtn = document.getElementById("useCurrentGpsBtn");
 if (useCurrentGpsBtn) {
   useCurrentGpsBtn.addEventListener("click", async () => {
