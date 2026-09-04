@@ -13,8 +13,8 @@ class OfficeLocation:
     latitude: float
     longitude: float
     radius_meters: float
-    max_accuracy_meters: float = 1000.0
-    enabled: bool = False
+    max_accuracy_meters: float = 500.0
+    enabled: bool = True
 
     @classmethod
     def from_file(cls, path: Path = OFFICE_LOCATION_FILE) -> "OfficeLocation":
@@ -31,9 +31,9 @@ class OfficeLocation:
                 name=env_name or "Leap India Office Premises",
                 latitude=float(env_lat) if env_lat else 19.1727325,
                 longitude=float(env_lon) if env_lon else 72.8605398,
-                radius_meters=float(env_radius) if env_radius else 5000.0,
-                max_accuracy_meters=float(env_max_acc) if env_max_acc else 1000.0,
-                enabled=env_enabled.lower() == "true" if env_enabled else False,
+                radius_meters=float(env_radius) if env_radius else 1500.0,
+                max_accuracy_meters=float(env_max_acc) if env_max_acc else 500.0,
+                enabled=env_enabled.lower() == "true" if env_enabled else True,
             )
             default.save(path)
             return default
@@ -48,9 +48,9 @@ class OfficeLocation:
             name=env_name or payload.get("name", "Leap India Office Premises"),
             latitude=float(env_lat) if env_lat else float(payload.get("latitude", 19.1727325)),
             longitude=float(env_lon) if env_lon else float(payload.get("longitude", 72.8605398)),
-            radius_meters=float(env_radius) if env_radius else float(payload.get("radius_meters", 5000)),
-            max_accuracy_meters=float(env_max_acc) if env_max_acc else float(payload.get("max_accuracy_meters", 1000)),
-            enabled=env_enabled.lower() == "true" if env_enabled is not None else bool(payload.get("enabled", False)),
+            radius_meters=float(env_radius) if env_radius else float(payload.get("radius_meters", 1500)),
+            max_accuracy_meters=float(env_max_acc) if env_max_acc else float(payload.get("max_accuracy_meters", 500)),
+            enabled=env_enabled.lower() == "true" if env_enabled is not None else bool(payload.get("enabled", True)),
         )
 
     def save(self, path: Path = OFFICE_LOCATION_FILE) -> None:
